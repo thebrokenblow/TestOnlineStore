@@ -1,13 +1,15 @@
+using Asp.Versioning;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using TestOnlineStore.Persistence.Dto.Product.Commands;
 using TestOnlineStore.Persistence.Dto.Product.Queries;
 using TestOnlineStore.Persistence.Repositories.Interfaces;
 
-namespace TestOnlineStore.WebApi.Controllers;
+namespace TestOnlineStore.WebApi.Controllers.V1;
 
 [ApiController]
-[Route("[controller]")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class ProductController(IRepositoryProduct repositoryProduct, IValidator<CreateProduct> validatorProduct) : ControllerBase
 {
     [HttpGet]

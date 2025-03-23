@@ -1,7 +1,12 @@
-﻿using FluentValidation;
+﻿using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
+using FluentValidation;
+using Microsoft.Extensions.Options;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Reflection;
 using System.Text.Encodings.Web;
 using TestOnlineStore.Persistence;
+using TestOnlineStore.WebApi.Configurations;
 using TestOnlineStore.WebApi.Middleware;
 
 namespace TestOnlineStore.WebApi;
@@ -12,17 +17,31 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment env)
     {
         services.AddPersistence(configuration);
         services.AddControllers();
+        services.AddSwaggerGen();
 
-        services.AddSwaggerGen(x =>
+        services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
+
+        services.AddApiVersioning(options =>
         {
-            var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-
-            x.IncludeXmlComments(xmlPath);
-        });
+            options.AssumeDefaultVersionWhenUnspecified = true;
+            options.DefaultApiVersion = new ApiVersion(1, 0);
+            options.ReportApiVersions = true;
+            options.ApiVersionReader = ApiVersionReader.Combine(
+                new UrlSegmentApiVersionReader(),
+                new QueryStringApiVersionReader("api-version"),
+                new HeaderApiVersionReader("X-Version"),
+                new MediaTypeApiVersionReader("X-Version"));
+        })
+       .AddMvc()
+       .AddApiExplorer(options =>
+       {
+           options.GroupNameFormat = "'v'VVV";
+           options.SubstituteApiVersionInUrl = true;
+           options.AddApiVersionParametersWhenVersionNeutral = true;
+       });
     }
 
-    public void Configure(IApplicationBuilder app)
+    public void Configure(IApplicationBuilder app, IApiVersionDescriptionProvider provider)
     {
         if (env.IsDevelopment())
         {
@@ -30,7 +49,15 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment env)
         }
 
         app.UseSwagger();
-        app.UseSwaggerUI();
+        app.UseSwaggerUI(config =>
+        {
+            foreach (var description in provider.ApiVersionDescriptions)
+            {
+                config.SwaggerEndpoint(
+                    $"/swagger/{description.GroupName}/swagger.json",
+                    description.GroupName.ToUpperInvariant());
+            }
+        });
 
         app.UseCustomExceptionHandler();
 

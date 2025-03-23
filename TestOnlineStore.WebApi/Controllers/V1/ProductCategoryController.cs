@@ -1,16 +1,16 @@
+using Asp.Versioning;
 using FluentValidation;
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using TestOnlienStore.Domain;
 using TestOnlineStore.Persistence.Dto.ProductCategory.Commands;
 using TestOnlineStore.Persistence.Dto.ProductCategory.Queries;
 using TestOnlineStore.Persistence.Repositories.Interfaces;
 
-namespace TestOnlineStore.WebApi.Controllers;
+namespace TestOnlineStore.WebApi.Controllers.V1;
 
 [ApiController]
-[ControllerName("productCategories")]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class ProductCategoryController(IRepositoryProductCategory repositoryProductCategory, IValidator<CreateProductCategory> validatorProductCategory) : ControllerBase
 {
     /// <summary>
